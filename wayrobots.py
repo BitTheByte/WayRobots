@@ -62,7 +62,10 @@ def wayback_find_robots(host):
 
 def wayback_url(url,year):
 	allowed_statuses = [200]
-	result = requests.get("http://web.archive.org/__wb/calendarcaptures?url={}&selected_year={}".format(url,year)).json()
+	try:
+		result = requests.get("http://web.archive.org/__wb/calendarcaptures?url={}&selected_year={}".format(url,year)).json()
+	except:
+		return
 
 	for month in range(0,12):
 
