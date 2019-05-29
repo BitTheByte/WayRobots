@@ -5,9 +5,12 @@ import time
 import re
 
 init(autoreset=True)
-
+log =""
 
 def pprint(out):
+	global log
+	log += out+"\n"
+
 	out = " " + out
 	if "[ERROR]" in out:
 		out = out.replace("[ERROR]","[%sERROR%s]" % (Fore.RED,Fore.RESET))
@@ -27,7 +30,6 @@ def pprint(out):
 	if ":[" in out:
 		out = out.replace(":[" , ":[%s" % Fore.LIGHTRED_EX)
 		out = out.replace("]","%s]" % Fore.WHITE)
-
 	print(out)
 
 def parse_robots(txt):
@@ -83,9 +85,9 @@ def wayback_url(url,year):
 									yield ts,val
 
 
-
-parser = argparse.ArgumentParser(description='Welcome to domainker help page')
+parser = argparse.ArgumentParser(description='Welcome to WayRobots help page')
 parser.add_argument('-i','--input',type=str, help='Target host')
+parser.add_argument('-o','--output',type=str, help='Output file')
 parser.add_argument('-y','--year',type=str, help='Years Range e.g[2014-2019]')
 args = parser.parse_args()
 
@@ -101,13 +103,16 @@ if not "-" in args.year:
 	pprint("[ERROR] Please specify starting and ending year e.g[2014-2019]")
 	exit()
 
-
 year   = args.year
 target = args.input
 
 pprint("Searching for robots.txt on *.%s" % target)
 
 robots_txt = set(wayback_find_robots(target))
+
+if len(robots_txt) == 0:
+	pprint("[ERROR] Wasn't able to find any [robots.txt] files")
+	exit()
 
 pprint("Found [robots.txt] on the following:\n\n  *- " + '\n  *- '.join(robots_txt) + "\n")
 
@@ -125,3 +130,6 @@ for year in range(year_from,year_to +1):
 				if not dir_name in _tmp:
 					pprint("  |_-> " + dir_name)
 				_tmp.append(dir_name)
+
+if args.output:
+	open(args.output,"w").write(log)
