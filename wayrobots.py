@@ -45,9 +45,12 @@ def parse_robots(txt):
 def fetch_content(ts,target):
 	ts_dirs = []
 	for timestap in ts:
-		content = requests.get("http://web.archive.org/web/{}if_/{}".format(timestap,target)).content
-		dirs = parse_robots(content)
-		ts_dirs.append({timestap:dirs})
+		try:
+			content = requests.get("http://web.archive.org/web/{}if_/{}".format(timestap,target)).content
+			dirs = parse_robots(content)
+			ts_dirs.append({timestap:dirs})
+		except:
+			pass
 	return ts_dirs
 	
 
@@ -85,7 +88,8 @@ def wayback_url(url,year):
 									yield ts,val
 
 
-parser = argparse.ArgumentParser(description='Welcome to WayRobots help page')
+
+parser = argparse.ArgumentParser(description='Welcome to domainker help page')
 parser.add_argument('-i','--input',type=str, help='Target host')
 parser.add_argument('-o','--output',type=str, help='Output file')
 parser.add_argument('-y','--year',type=str, help='Years Range e.g[2014-2019]')
@@ -102,6 +106,7 @@ if not args.year:
 if not "-" in args.year:
 	pprint("[ERROR] Please specify starting and ending year e.g[2014-2019]")
 	exit()
+
 
 year   = args.year
 target = args.input
