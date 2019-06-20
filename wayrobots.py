@@ -39,6 +39,8 @@ def pprint(out):
     if ":[" in out:
         out = out.replace(":[", ":[%s" % Fore.LIGHTRED_EX)
         out = out.replace("]", "%s]" % Fore.WHITE)
+    if "=>" in out:
+        out = out.replace("=>" , "%s=%s>%s" % (Fore.LIGHTBLACK_EX,Fore.RED,Fore.LIGHTWHITE_EX))
     print(out)
 
 
@@ -125,9 +127,9 @@ def crawling_robots(endpoint):
     else:
         endpoint = ".*" + endpoint + ".*"
     content = requests.get(
-        "http://web.archive.org/cdx/search/cdx?url={}&matchType=prefix&from=2016&to=2018&output=txt&collapse=urlkey&fl=original".format(target)).content
-    wp_files = re.findall(endpoint, content)
-    return wp_files
+        "http://web.archive.org/cdx/search/cdx?url={}&matchType=prefix&from={}&to={}&output=txt&collapse=urlkey&fl=original".format(target,year_from,year_to)).content
+    files = re.findall(endpoint, content)
+    return files
 
 
 parser = argparse.ArgumentParser(description='Welcome to domainker help page')
@@ -176,7 +178,7 @@ for year in range(year_from, year_to + 1):
                     pprint("  |_-> " + dir_name)
                     if dir_name != "/":
                         for i in range(len(crawling_robots(dir_name))):
-                            pprint("         |_--> " + crawling_robots(dir_name)[i] + "    :   " + str(check_endpoint_stat(crawling_robots(dir_name)[i])))
+                            pprint("  |   |_-> " + crawling_robots(dir_name)[i] + " => " + str(check_endpoint_stat(crawling_robots(dir_name)[i])))
                 _tmp.append(dir_name)
 
 if args.output:
