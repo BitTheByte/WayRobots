@@ -22,10 +22,10 @@ class Threader:
 	def __wait(self):
 		while 1:
 			running = threading.enumerate()
-			remain = [x.name for x in running if self.__name() in x.name]
-			if len(remain) == 0:
+			if remain := [x.name for x in running if self.__name() in x.name]:
+				time.sleep(0.5)
+			else:
 				break
-			time.sleep(0.5)
 
 	def on_waiting(self):
 		return self.q.qsize()

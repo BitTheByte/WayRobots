@@ -5,8 +5,8 @@ def parse_robots(txt):
     txt = txt.split("\n")
     res = []
     for line in txt:
-        if not "#" in line:
-            if ":" in line and "/" in line and not "http" in line:
+        if "#" not in line:
+            if ":" in line and "/" in line and "http" not in line:
                 res.append(line.split(":")[1].strip())
     return set(res)
 
@@ -51,13 +51,14 @@ if not args.input:
 host = args.input
 located_robots = wbm_locate_robots_file(host)
 
-show("Found robots.txt on {} Domain(s) ..".format(len(located_robots)))
-for d in located_robots: show(" >> {}".format(d) )
+show(f"Found robots.txt on {len(located_robots)} Domain(s) ..")
+for d in located_robots:
+    show(f" >> {d}")
 
-for robot in  located_robots :
+for robot in located_robots:
     urls = sorted( wayback_robots(robot) )
-    show("Found on {} ({}) DIR(s)".format(robot,len(urls)))
+    show(f"Found on {robot} ({len(urls)}) DIR(s)")
     if len(urls) == 0: continue
 
     for url in urls:
-        show(" >> {}".format(url))
+        show(f" >> {url}")

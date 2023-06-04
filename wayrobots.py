@@ -12,35 +12,39 @@ def pprint(out):
     global log
     log += out + "\n"
 
-    out = " " + out
+    out = f" {out}"
     if "[ERROR]" in out:
-        out = out.replace("[ERROR]", "[%sERROR%s]" % (Fore.RED, Fore.RESET))
+        out = out.replace("[ERROR]", f"[{Fore.RED}ERROR{Fore.RESET}]")
 
     if "[WARNING]" in out:
-        out = out.replace("[WARNING]", "[%sWARNING]%s" % (Fore.LIGHTWHITE_EX, Fore.YELLOW))
+        out = out.replace("[WARNING]", f"[{Fore.LIGHTWHITE_EX}WARNING]{Fore.YELLOW}")
 
     if "[robots.txt]" in out:
-        out = out.replace("[robots.txt]", "[%srobots.txt%s]" % (Fore.LIGHTBLACK_EX, Fore.RESET))
+        out = out.replace(
+            "[robots.txt]", f"[{Fore.LIGHTBLACK_EX}robots.txt{Fore.RESET}]"
+        )
 
     if "|_->" in out:
-        out = out.replace("->", "->%s" % (Fore.LIGHTBLUE_EX))
+        out = out.replace("->", f"->{Fore.LIGHTBLUE_EX}")
 
     if "|_-->" in out:
-            if ":   200" in out:
-                out = out.replace("|_-->", "%s|_-->%s" % (Fore.LIGHTGREEN_EX, Fore.GREEN))
-            elif ":   30" in out:
-                out = out.replace("|_-->", "%s|_-->%s" % (Fore.LIGHTGREEN_EX, Fore.YELLOW))
-            else:
-                out = out.replace("|_-->", "%s|_-->%s" % (Fore.LIGHTGREEN_EX, Fore.RED))
+        if ":   200" in out:
+            out = out.replace("|_-->", f"{Fore.LIGHTGREEN_EX}|_-->{Fore.GREEN}")
+        elif ":   30" in out:
+            out = out.replace("|_-->", f"{Fore.LIGHTGREEN_EX}|_-->{Fore.YELLOW}")
+        else:
+            out = out.replace("|_-->", f"{Fore.LIGHTGREEN_EX}|_-->{Fore.RED}")
 
     if "*-" in out:
-        out = out.replace("*-", "%s*%s-%s" % (Fore.BLUE, Fore.RED, Fore.LIGHTWHITE_EX))
+        out = out.replace("*-", f"{Fore.BLUE}*{Fore.RED}-{Fore.LIGHTWHITE_EX}")
 
     if ":[" in out:
-        out = out.replace(":[", ":[%s" % Fore.LIGHTRED_EX)
-        out = out.replace("]", "%s]" % Fore.WHITE)
+        out = out.replace(":[", f":[{Fore.LIGHTRED_EX}")
+        out = out.replace("]", f"{Fore.WHITE}]")
     if "=>" in out:
-        out = out.replace("=>" , "%s=%s>%s" % (Fore.LIGHTBLACK_EX,Fore.RED,Fore.LIGHTWHITE_EX))
+        out = out.replace(
+            "=>", f"{Fore.LIGHTBLACK_EX}={Fore.RED}>{Fore.LIGHTWHITE_EX}"
+        )
     print(out)
 
 
@@ -48,8 +52,8 @@ def parse_robots(txt):
     txt = txt.split("\n")
     res = []
     for line in txt:
-        if not "#" in line:
-            if ":" in line and "/" in line and not "http" in line:
+        if "#" not in line:
+            if ":" in line and "/" in line and "http" not in line:
                 res.append(line.split(":")[1].strip())
     return res
 
@@ -58,7 +62,9 @@ def fetch_content(ts, target):
     ts_dirs = []
     for timestap in ts:
         try:
-            content = requests.get("http://web.archive.org/web/{}if_/{}".format(timestap, target)).content
+            content = requests.get(
+                f"http://web.archive.org/web/{timestap}if_/{target}"
+            ).content
             dirs = parse_robots(content)
             ts_dirs.append({timestap: dirs})
         except:
@@ -69,17 +75,17 @@ def fetch_content(ts, target):
 
 def wayback_find_robots(host):
     content = requests.get(
-        "http://web.archive.org/cdx/m_search/cdx?url=*.{}/*&output=txt&fl=original&collapse=urlkey".format(
-            host)).content
-    robots_files = re.findall(r".*?.%s.*/robots\.txt" % host, content)
-    return robots_files
+        f"http://web.archive.org/cdx/m_search/cdx?url=*.{host}/*&output=txt&fl=original&collapse=urlkey"
+    ).content
+    return re.findall(r".*?.%s.*/robots\.txt" % host, content)
 
 
 def wayback_url(url, year):
     allowed_statuses = [200]
     try:
         result = requests.get(
-            "http://web.archive.org/__wb/calendarcaptures?url={}&selected_year={}".format(url, year)).json()
+            f"http://web.archive.org/__wb/calendarcaptures?url={url}&selected_year={year}"
+        ).json()
     except:
         return
 
@@ -96,15 +102,14 @@ def wayback_url(url, year):
                     current_day += 1
 
                     if day != {}:
-                        ts = day['ts']
                         st = day['st'][0]
 
                         if st in allowed_statuses:
+                            ts = day['ts']
                             timestamp2dir = fetch_content(ts, url)
 
                             for i in timestamp2dir:
-                                for ts, val in i.items():
-                                    yield ts, val
+                                yield from i.items()
 
 
 def check_endpoint_stat(endpoint):
@@ -117,19 +122,19 @@ def crawling_robots(endpoint):
         endpoint = endpoint.split('.')[0] + '\\.' + endpoint.split('.')[1]
     if '*' in endpoint:
         _tmp = [_temp.start() for _temp in re.finditer(r'\*', endpoint)]
-        temp = endpoint[0:_tmp[0]]
+        temp = endpoint[:_tmp[0]]
         for i in range(len(_tmp)):
             if i in range(len(_tmp) - 1):
-                temp = temp + "." + endpoint[_tmp[i]:_tmp[i+1]]
+                temp = f"{temp}.{endpoint[_tmp[i]:_tmp[i + 1]]}"
             else:
-                temp = temp + "." + endpoint[_tmp[i]:len(endpoint)]
-                endpoint = ".*" + temp + ".*"
+                temp = f"{temp}.{endpoint[_tmp[i]:]}"
+                endpoint = f".*{temp}.*"
     else:
-        endpoint = ".*" + endpoint + ".*"
+        endpoint = f".*{endpoint}.*"
     content = requests.get(
-        "http://web.archive.org/cdx/search/cdx?url={}&matchType=prefix&from={}&to={}&output=txt&collapse=urlkey&fl=original".format(target,year_from,year_to)).content
-    files = re.findall(endpoint, content)
-    return files
+        f"http://web.archive.org/cdx/search/cdx?url={target}&matchType=prefix&from={year_from}&to={year_to}&output=txt&collapse=urlkey&fl=original"
+    ).content
+    return re.findall(endpoint, content)
 
 
 parser = argparse.ArgumentParser(description='Welcome to domainker help page')
@@ -143,21 +148,23 @@ if not args.input:
     exit()
 
 if not args.year:
-    pprint("[WARNING] You haven't specify the year, Using current year: %s" % time.strftime("%Y"))
-    args.year = "%s-%s" % (time.strftime("%Y"), time.strftime("%Y"))
+    pprint(
+        f"""[WARNING] You haven't specify the year, Using current year: {time.strftime("%Y")}"""
+    )
+    args.year = f'{time.strftime("%Y")}-{time.strftime("%Y")}'
 
-if not "-" in args.year:
+if "-" not in args.year:
     pprint("[ERROR] Please specify starting and ending year e.g[2014-2019]")
     exit()
 
 year = args.year
 target = args.input
 
-pprint("Searching for robots.txt on *.%s" % target)
+pprint(f"Searching for robots.txt on *.{target}")
 
 robots_txt = set(wayback_find_robots(target))
 
-if len(robots_txt) == 0:
+if not robots_txt:
     pprint("[ERROR] Wasn't able to find any [robots.txt] files")
     exit()
 
@@ -168,17 +175,19 @@ year_to = int(year.split("-")[1])
 
 for year in range(year_from, year_to + 1):
     for robot_file in robots_txt:
-        pprint("[%s]::[%s] Searching for [robots.txt] snapshot" % (year, robot_file))
+        pprint(f"[{year}]::[{robot_file}] Searching for [robots.txt] snapshot")
         wb = wayback_url(robot_file, year)
 
         _tmp = []
         for result in wb:
             for dir_name in result[1]:
                 if dir_name not in _tmp:
-                    pprint("  |_-> " + dir_name)
+                    pprint(f"  |_-> {dir_name}")
                     if dir_name != "/":
                         for i in range(len(crawling_robots(dir_name))):
-                            pprint("  |   |_-> " + crawling_robots(dir_name)[i] + " => " + str(check_endpoint_stat(crawling_robots(dir_name)[i])))
+                            pprint(
+                                f"  |   |_-> {crawling_robots(dir_name)[i]} => {str(check_endpoint_stat(crawling_robots(dir_name)[i]))}"
+                            )
                 _tmp.append(dir_name)
 
 if args.output:
